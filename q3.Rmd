@@ -1,0 +1,264 @@
+---
+title: "Advanced Bioinformatics 2023 assessment"
+author: "m2210296"
+date: "2023-04-17"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Question 3.1
+
+```{r}
+sum(5:55)
+```
+Question 3.2
+
+```{r}
+sumfun <- function(n) {sum(5:n)}
+
+result1 <- sumfun(10)
+result2 <- sumfun(20)
+result3 <- sumfun(100)
+
+# Print the results
+cat("The sum of integers between 5 and 10 is", result1, "\n")
+cat("The sum of integers between 5 and 20 is", result2, "\n")
+cat("The sum of integers between 5 and 100 is", result3, "\n")
+```
+Question 3.3
+
+```{r}
+# The first two values must be manually stated
+fb <- c(1,1)
+# now loop over the next values
+for (i in 3:12) {
+  fb1 <- fb[i-1]+fb[i-2]
+  fb <- c(fb,fb1)
+}
+cat("The Fibonacci series is", fb)
+```
+
+Question 3.4
+
+```{r}
+library(ggplot2)
+ggplot(mtcars, aes(x = factor(gear), y = mpg, fill = factor(gear))) +geom_boxplot() +  labs(x = "Number of gears", y = "Miles per gallon", fill = "Number of gears")
+```
+
+Question 3.5
+
+```{r}
+mdl <- lm(dist ~ speed, data = cars)
+summary(mdl)
+```
+The speed is given in mph and the stopping distance is given in feet. The intercept is -17.57 feet and the stopping distance increases by 3.93 feet for each 1 mph increase in speed. The standard errors are 6.76 for the intercept and 0.415 for speed. The intercept is significant at the 0.05 level and the speed variable is significant at the 0.001 level.
+Note that very low speeds result in a negative predicted stopping distance, which is an artefact of the regression and predicted values should only be used above this threshold.
+
+
+Question 3.6
+
+```{r}
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Braking Distance vs. Speed",
+       x = "Speed (mph)",
+       y = "Braking Distance (ft)") +
+  theme_bw()
+```
+
+Question 3.7
+
+First we create the linear model estimation of distance vs. speed squared
+
+```{r}
+cars2=cars
+cars2$speed2='^'(cars2$speed,2)
+mdl2 <- lm(dist ~ speed2, data = cars2)
+cf=coef(mdl2)
+summary(mdl2)
+```
+```{r}
+ggplot(cars2, aes(x = speed2, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Braking Distance vs. Speed^2",
+       x = "Speed^2 (mph^2)",
+       y = "Braking Distance (ft)") +
+  theme_bw()
+```
+
+From here on we only care about the slope, the intercept is ignored as this represents the reaction time value we're looking for at different speeds. 
+
+```{r}
+
+# Next, calculate the predicted values during braking only
+
+cars2$predicted_stopping_distance=cf[2]*cars2$speed2
+
+# During braking the average speed is half of initial speed
+# Need to convert the units: 1 mph = 1.46667 ft/s
+
+cars2$avg_braking_speed_ft_s=1.46667*cars2$speed/2
+
+# Calculate stopping time by dividing distance/speed
+# Do this both for predicted and actual stopping time
+cars2$predicted_stopping_time=cars2$predicted_stopping_distance/cars2$avg_braking_speed_ft_s
+cars2$actual_stopping_time=cars2$dist/cars2$avg_braking_speed_ft_s
+```
+
+Now the calculation is a simple mean of the difference in stopping times between the predicted time (which excludes any intercept) and the actual time. 
+This implictly assumes a slope of 1 between the predicted and actual values (as stated in the question), which reduces to the calculation of the mean of the difference.
+
+```{r}
+# 
+react_time <- mean(cars2$actual_stopping_time-cars2$predicted_stopping_time)
+
+cat("The estimated reaction time is",react_time,"s")
+
+```
+0.88 seconds is a reasonable estimate of stopping time, which is estimated at around 0.75 seconds in various public sources 
+
+```{r}
+
+ggplot(cars2, aes(x = actual_stopping_time, y = predicted_stopping_time)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Predicted vs actual stopping time",
+       x = "actual stopping time",
+       y = "predicted stopping time") +
+  theme_bw()
+
+```
+
+The slope in the graph is less than 1, which is probably due to the fact that the square function does not perfectly fit the actual stopping distance. This may be driven by some outliers, such as the near 8 second actual stopping time vs. a predicted 2.5 seconds on the right of the chart (14mph taking 80ft to stop in row 23).
+
+
+RNA-seq assessment
+
+3.8
+
+```{r}
+all_counts <- read.csv(file = paste0(dirname(path.expand('~')),"/Downloads/LMS/exercises/data/all_counts.csv"), row.names = 1)
+sam_des <- read.table(file=paste0(dirname(path.expand('~')),"/Downloads/LMS/exercises/data/sample_description.txt"), sep = "\t", header = TRUE)
+```
+
+3.9
+```{r}
+col_data <- data.frame(Sample = sam_des$Sample,
+                  Group = sam_des$Group,
+                  Batch = sam_des$Batch)
+cat("The dimensions of the col_data dataframe of",dim(col_data)[1],"match the length of the description",dim(sam_des)[1],"while we selected",dim(col_data)[2],"of",dim(sam_des)[2],"columns from sam_des only")
+```
+
+3.10
+```{r message=FALSE}
+#if (!require("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#BiocManager::install("DESeq2")
+
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(countData = all_counts, 
+                              colData = col_data, 
+                              design = ~Group)
+dds <- DESeq(dds)
+```
+
+3.11
+```{r}
+rld <- rlog(dds)
+vsd <- varianceStabilizingTransformation(dds)
+```
+
+3.12
+#```{r, fig.align = "center", fig.height = 5, fig.width = 5,    out.width = "8.5in"}
+```{r}
+#BiocManager::install("DESeq2")
+library("pheatmap")
+dds_counts <- counts(dds, normalized = TRUE)
+select <- order(rowMeans(dds_counts), decreasing = TRUE)[1:40]
+pheatmap(assay(rld)[select, ],cellheight=5,fontsize = 5)
+```
+```{r}
+pheatmap(assay(vsd)[select, ],cellheight=5,fontsize = 5)
+```
+
+3.13
+```{r}
+sample_dist <- dist(t(assay(rld)))
+sdm <- as.matrix(sample_dist)
+library("RColorBrewer")
+rownames(sdm) <- rld$Group
+colnames(sdm) <- NULL
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
+pheatmap(sdm,
+         clustering_distance_rows = sample_dist,
+         clustering_distance_cols = sample_dist,
+         col = colors,
+         display_numbers = round(sdm,2))
+```
+
+3.14
+```{r}
+plotPCA(rld, intgroup = "Group")
+```
+
+The variance of the first principal component is 77% and 13% for the second principal component.
+
+```{r}
+plotPCA(vsd, intgroup = "Group")
+```
+
+The variance of the first principal component is 78% and 11% for the second principal component.
+
+The results and plots between the rlog method and VST method are quite similar, the VST method assigns slightly more variance to the first PC and less to the second one.
+
+
+3.16
+
+```{r message=FALSE}
+library('ChIPQC')
+firstPeakSet <- ChIPQC:::GetGRanges(paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/data/MacsPeaks/mycmelrep1_peaks.xls"), sep="\t", simple=F)
+secondPeakSet <- ChIPQC:::GetGRanges(paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/data/MacsPeaks/mycmelrep2_peaks.xls"), sep="\t", simple=F)
+firstANDsecondPeakSets <- firstPeakSet[firstPeakSet %over% secondPeakSet]
+length(firstANDsecondPeakSets)
+```
+
+3.17
+
+```{r}
+foldEnrichment <- firstANDsecondPeakSets$fold_enrichment
+sorted_gr <- firstANDsecondPeakSets[order(foldEnrichment, decreasing=TRUE)]
+sorted_resized_gr <- resize(sorted_gr[1:500],width=200,fix="center")
+```
+
+3.18
+
+```{r message=FALSE}
+library(TxDb.Mmusculus.UCSC.mm9.knownGene)
+library(org.Mm.eg.db)
+library(GenomeInfoDb)
+library(ChIPseeker)
+library(BSgenome.Mmusculus.UCSC.mm9)
+#BiocManager::install("BSgenome.Mmusculus.UCSC.mm9") 
+
+seqlevelsStyle(sorted_resized_gr) <- 'UCSC'
+sorted_resized_gr[1:2,]
+peakAnno <- annotatePeak(sorted_resized_gr, tssRegion = c(-1000, 1000), TxDb = TxDb.Mmusculus.UCSC.mm9.knownGene,
+    annoDb = "org.Mm.eg.db")
+peakAnno_GR <- as.GRanges(peakAnno)
+seq <- getSeq(BSgenome.Mmusculus.UCSC.mm9,peakAnno_GR)
+seq_info <- paste(peakAnno_GR$transcriptId,peakAnno_GR$ENSEMBL,peakAnno_GR$ID,sep='_')
+names(seq) <- seq_info
+writeXStringSet(seq,file=paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/mycmelrep_peaks.fasta"))
+```
+3.19
+
+``````{r, echo=FALSE}
+htmltools::includeHTML(paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/meme-chip.html"))
+```
