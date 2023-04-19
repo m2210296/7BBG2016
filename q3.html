@@ -422,13 +422,14 @@ summary(mdl)</code></pre>
 ## Multiple R-squared:  0.6511, Adjusted R-squared:  0.6438 
 ## F-statistic: 89.57 on 1 and 48 DF,  p-value: 1.49e-12</code></pre>
 <p>The speed is given in mph and the stopping distance is given in feet.
-The intercept is -17.57 feet and the stopping distance increases by 3.93
-feet for each 1 mph increase in speed. The standard errors are 6.76 for
-the intercept and 0.415 for speed. The intercept is significant at the
-0.05 level and the speed variable is significant at the 0.001 level.
-Note that very low speeds result in a negative predicted stopping
-distance, which is an artefact of the regression and predicted values
-should only be used above this threshold.</p>
+The intercept is -17.579 feet and the stopping distance increases by
+3.932 feet for each 1 mph increase in speed (the fitted slope). The
+standard errors are 6.758 for the intercept and 0.416 for speed. The
+intercept is significant at the 0.05 level and the speed variable is
+significant at the 0.001 level. Note that very low speeds result in a
+negative predicted stopping distance, which is an artefact of the
+regression and predicted values should only be used above this
+threshold.</p>
 </div>
 <div id="question-3.6" class="section level2">
 <h2>Question 3.6</h2>
@@ -641,13 +642,13 @@ sorted_resized_gr[1:2,]</code></pre>
 ##   seqinfo: 22 sequences from an unspecified genome; no seqlengths</code></pre>
 <pre class="r"><code>peakAnno &lt;- annotatePeak(sorted_resized_gr, tssRegion = c(-1000, 1000), TxDb = TxDb.Mmusculus.UCSC.mm9.knownGene,
     annoDb = &quot;org.Mm.eg.db&quot;)</code></pre>
-<pre><code>## &gt;&gt; preparing features information...      2023-04-19 8:09:12 PM 
-## &gt;&gt; identifying nearest features...        2023-04-19 8:09:12 PM 
-## &gt;&gt; calculating distance from peak to TSS...   2023-04-19 8:09:12 PM 
-## &gt;&gt; assigning genomic annotation...        2023-04-19 8:09:12 PM 
-## &gt;&gt; adding gene annotation...          2023-04-19 8:09:19 PM 
-## &gt;&gt; assigning chromosome lengths           2023-04-19 8:09:19 PM 
-## &gt;&gt; done...                    2023-04-19 8:09:19 PM</code></pre>
+<pre><code>## &gt;&gt; preparing features information...      2023-04-19 8:49:42 PM 
+## &gt;&gt; identifying nearest features...        2023-04-19 8:49:43 PM 
+## &gt;&gt; calculating distance from peak to TSS...   2023-04-19 8:49:43 PM 
+## &gt;&gt; assigning genomic annotation...        2023-04-19 8:49:43 PM 
+## &gt;&gt; adding gene annotation...          2023-04-19 8:49:50 PM 
+## &gt;&gt; assigning chromosome lengths           2023-04-19 8:49:50 PM 
+## &gt;&gt; done...                    2023-04-19 8:49:50 PM</code></pre>
 <pre class="r"><code>peakAnno_GR &lt;- as.GRanges(peakAnno)
 seq &lt;- getSeq(BSgenome.Mmusculus.UCSC.mm9,peakAnno_GR)
 seq_info &lt;- paste(peakAnno_GR$transcriptId,peakAnno_GR$ENSEMBL,peakAnno_GR$ID,sep=&#39;_&#39;)
