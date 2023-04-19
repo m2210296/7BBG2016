@@ -1,7 +1,7 @@
 ---
 title: "Advanced Bioinformatics 2023 assessment"
 author: "m2210296"
-date: "2023-04-17"
+date: "2023-04-19"
 output:
   html_document: default
   pdf_document: default
@@ -11,12 +11,14 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Question 3.1
+# General R/Rstudio assessment (33 pts)
+
+## Question 3.1
 
 ```{r}
 sum(5:55)
 ```
-Question 3.2
+## Question 3.2
 
 ```{r}
 sumfun <- function(n) {sum(5:n)}
@@ -30,7 +32,7 @@ cat("The sum of integers between 5 and 10 is", result1, "\n")
 cat("The sum of integers between 5 and 20 is", result2, "\n")
 cat("The sum of integers between 5 and 100 is", result3, "\n")
 ```
-Question 3.3
+## Question 3.3
 
 ```{r}
 # The first two values must be manually stated
@@ -43,14 +45,14 @@ for (i in 3:12) {
 cat("The Fibonacci series is", fb)
 ```
 
-Question 3.4
+## Question 3.4
 
 ```{r}
 library(ggplot2)
 ggplot(mtcars, aes(x = factor(gear), y = mpg, fill = factor(gear))) +geom_boxplot() +  labs(x = "Number of gears", y = "Miles per gallon", fill = "Number of gears")
 ```
 
-Question 3.5
+## Question 3.5
 
 ```{r}
 mdl <- lm(dist ~ speed, data = cars)
@@ -60,7 +62,7 @@ The speed is given in mph and the stopping distance is given in feet. The interc
 Note that very low speeds result in a negative predicted stopping distance, which is an artefact of the regression and predicted values should only be used above this threshold.
 
 
-Question 3.6
+## Question 3.6
 
 ```{r}
 ggplot(cars, aes(x = speed, y = dist)) +
@@ -72,7 +74,7 @@ ggplot(cars, aes(x = speed, y = dist)) +
   theme_bw()
 ```
 
-Question 3.7
+## Question 3.7
 
 First we create the linear model estimation of distance vs. speed squared
 
@@ -139,16 +141,16 @@ ggplot(cars2, aes(x = actual_stopping_time, y = predicted_stopping_time)) +
 The slope in the graph is less than 1, which is probably due to the fact that the square function does not perfectly fit the actual stopping distance. This may be driven by some outliers, such as the near 8 second actual stopping time vs. a predicted 2.5 seconds on the right of the chart (14mph taking 80ft to stop in row 23).
 
 
-RNA-seq assessment
+# RNA-seq assessment (8 pts)
 
-3.8
+## 3.8
 
 ```{r}
 all_counts <- read.csv(file = paste0(dirname(path.expand('~')),"/Downloads/LMS/exercises/data/all_counts.csv"), row.names = 1)
 sam_des <- read.table(file=paste0(dirname(path.expand('~')),"/Downloads/LMS/exercises/data/sample_description.txt"), sep = "\t", header = TRUE)
 ```
 
-3.9
+## 3.9
 ```{r}
 col_data <- data.frame(Sample = sam_des$Sample,
                   Group = sam_des$Group,
@@ -156,7 +158,7 @@ col_data <- data.frame(Sample = sam_des$Sample,
 cat("The dimensions of the col_data dataframe of",dim(col_data)[1],"match the length of the description",dim(sam_des)[1],"while we selected",dim(col_data)[2],"of",dim(sam_des)[2],"columns from sam_des only")
 ```
 
-3.10
+## 3.10
 ```{r message=FALSE}
 #if (!require("BiocManager", quietly = TRUE))
 #    install.packages("BiocManager")
@@ -169,14 +171,13 @@ dds <- DESeqDataSetFromMatrix(countData = all_counts,
 dds <- DESeq(dds)
 ```
 
-3.11
+## 3.11
 ```{r}
 rld <- rlog(dds)
 vsd <- varianceStabilizingTransformation(dds)
 ```
 
-3.12
-#```{r, fig.align = "center", fig.height = 5, fig.width = 5,    out.width = "8.5in"}
+## 3.12
 ```{r}
 #BiocManager::install("DESeq2")
 library("pheatmap")
@@ -188,7 +189,7 @@ pheatmap(assay(rld)[select, ],cellheight=5,fontsize = 5)
 pheatmap(assay(vsd)[select, ],cellheight=5,fontsize = 5)
 ```
 
-3.13
+## 3.13
 ```{r}
 sample_dist <- dist(t(assay(rld)))
 sdm <- as.matrix(sample_dist)
@@ -203,13 +204,14 @@ pheatmap(sdm,
          display_numbers = round(sdm,2))
 ```
 
-3.14
+## 3.14
 ```{r}
 plotPCA(rld, intgroup = "Group")
 ```
 
 The variance of the first principal component is 77% and 13% for the second principal component.
 
+## 3.15
 ```{r}
 plotPCA(vsd, intgroup = "Group")
 ```
@@ -218,8 +220,9 @@ The variance of the first principal component is 78% and 11% for the second prin
 
 The results and plots between the rlog method and VST method are quite similar, the VST method assigns slightly more variance to the first PC and less to the second one.
 
+# ChIP-seq assessment (4 pts)
 
-3.16
+## 3.16
 
 ```{r message=FALSE}
 library('ChIPQC')
@@ -229,7 +232,7 @@ firstANDsecondPeakSets <- firstPeakSet[firstPeakSet %over% secondPeakSet]
 length(firstANDsecondPeakSets)
 ```
 
-3.17
+## 3.17
 
 ```{r}
 foldEnrichment <- firstANDsecondPeakSets$fold_enrichment
@@ -237,7 +240,7 @@ sorted_gr <- firstANDsecondPeakSets[order(foldEnrichment, decreasing=TRUE)]
 sorted_resized_gr <- resize(sorted_gr[1:500],width=200,fix="center")
 ```
 
-3.18
+## 3.18
 
 ```{r message=FALSE}
 library(TxDb.Mmusculus.UCSC.mm9.knownGene)
@@ -257,7 +260,10 @@ seq_info <- paste(peakAnno_GR$transcriptId,peakAnno_GR$ENSEMBL,peakAnno_GR$ID,se
 names(seq) <- seq_info
 writeXStringSet(seq,file=paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/mycmelrep_peaks.fasta"))
 ```
-3.19
+
+## 3.19
+
+Please also see the appMEMECHIP file in the repository for full information. Embedded below is the html file from the run.
 
 ``````{r, echo=FALSE}
 htmltools::includeHTML(paste0(dirname(path.expand('~')),"/Downloads/LMS_ChIPseq_short-master-2023-final/course/meme-chip.html"))
