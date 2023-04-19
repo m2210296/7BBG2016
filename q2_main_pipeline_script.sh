@@ -132,19 +132,3 @@ mamba run -n ngs --no-capture-output java -Xmx8g -jar snpEff.jar hg19 ~/ngs_pipe
 mamba run -n ngs --no-capture-output java -jar SnpSift.jar filter -f ~/ngs_pipeline/results/WES01_chr22m_filtered_chr22.hg19_snpEff.vcf "! exists ID" > ~/ngs_pipeline/results//WES01_chr22m_filtered_chr22.hg19_snpEff_not_in_dbSnp.vcf
 grep ^# ~/ngs_pipeline/results//WES01_chr22m_filtered_chr22.hg19_snpEff_not_in_dbSnp.vcf > ~/ngs_pipeline/results/basic_prioritization_snpEff.vcf
 grep -i exon ~/ngs_pipeline/results//WES01_chr22m_filtered_chr22.hg19_snpEff_not_in_dbSnp.vcf >> ~/ngs_pipeline/results/basic_prioritization_snpEff.vcf
-
-# 2.6
-
-# For the full code to run the pipeline plesae see altscript.sh
-# Bowtie 2 runs somewhat slower than bwa mem, however this is offset by the fact that I first need to index the hg19.fa.gz file, which takes an hour. Therefore on repeated runs bwa mem is faster but for a one-off run bowtie2 is faster in total, taking into account the data preparation part.
-# Using an alternative algorithm is useful as it can surface previously unsee items that the main algorithm may have missed or help focus the search on the overlapping items.
-# In this case using the annovar bowtie 2 prioritised file only found 434 lines vs. 507 for bwa mem.
-# Comparing bwa mem saved from previous run to bowtie2:
-# cat basic_prioritization_annovar.csv | awk -F ',' '{print $2}' | sort > bwa
-# cat ~/ngs_pipeline/results/basic_prioritization_annovar.csv | awk -F ',' '{print $2}' | sort > bowtie
-# To determine the additional information:
-# diff bwa bowtie | grep ">" | wc -l
-# 1 line was added from bowtie2
-# diff bwa bowtie | grep "<" | wc -l
-# 74 lines were in bwa mem but not in bowtie2
-# On this basis bwa mem delivered more candidates to look at, but bowtie2 may provide a more focused list to investigate.
